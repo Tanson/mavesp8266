@@ -40,18 +40,13 @@
 #include "mavesp8266_parameters.h"
 #include "mavesp8266_gcs.h"
 #include "mavesp8266_vehicle.h"
+#include "mavesp8266_HtmlTemplate.h"
 
 #include <ESP8266WebServer.h>
 #include <Hash.h>
 
-const char PROGMEM kTEXTPLAIN[]  = "text/plain";
-const char PROGMEM kTEXTHTML[]   = "text/html";
-const char PROGMEM kACCESSCTL[]  = "Access-Control-Allow-Origin";
-const char PROGMEM kUPLOADFORM[] = "<form method='POST' action='/upload' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>";
-const char PROGMEM kHEADER[]     = "<!doctype html><html><head><title>MavLink Bridge</title><meta charset='UTF-8'></head><body>";
-const char PROGMEM kBADARG[]     = "BAD ARGS";
-const char PROGMEM kAPPJSON[]    = "application/json";
-const char PROGMEM HELPHTML[]    = "<table border='1' cellpadding='3' cellspacing='0' bordercolor='#999999'><thead><tr><td >url</td><td>description</td></tr></thead><tbody><tr><td><a href='http://192.168.4.1/getparameters'>http://192.168.4.1/getparameters</a></td><td>list of parameters</td></tr><tr><td><a href='http://192.168.4.1/getstatus'>http://192.168.4.1/getstatus</a></td><td>getstatus of the ESP8266</td></tr><tr><td><a href='http://192.168.4.1/setparameters?key=value&amp;key=value'>http://192.168.4.1/setparameters?key=value&amp;key=value</a></td><td>Setting parameters</td></tr><tr><td><a href='http://192.168.4.1/setparameters?baud=57600&amp;channel=9&amp;reboot=1'>http://192.168.4.1/setparameters?baud=57600&amp;channel=9&amp;reboot=1</a></td><td>Combination</td></tr><tr><td><a href='http://192.168.4.1/setparameters?mode=1&amp;ssidsta=networkname&amp;pwdsta=thepassword&amp;ipsta=192.168.1.123&amp;gatewaysta=192.168.1.1&amp;subnetsta=255.255.255.0'>http://192.168.4.1/setparameters?mode=1&amp;ssidsta=networkname&amp;pwdsta=thepassword&amp;ipsta=192.168.1.123&amp;gatewaysta=192.168.1.1&amp;subnetsta=255.255.255.0</a></td> <td>STA mode example</td></tr><tr><td><a href='http://192.168.4.1/getparameters'>http://192.168.4.1/update</a></td><td>OTA</td></tr></tbody></table><table border='1' cellpadding='3' cellspacing='0' bordercolor='#999999'><thead><tr><th>Parameter</th><th>Defaults</th><th>Description</th><th>url</th></tr></thead><tbody><tr><td>baud</td><td>57600</td><td>Serial port speed</td><td><a href='http://192.168.4.1/setparameters?baud=57600'>http://192.168.4.1/setparameters?baud=57600</a></td></tr><tr><td>channel</td><td>11</td><td>AP mode channel</td><td><a href='http://192.168.4.1/setparameters?channel=11'>http://192.168.4.1/setparameters?channel=11</a></td></tr><tr><td>cport</td><td>14555</td><td>Local listening port</td><td><a href='http://192.168.4.1/setparameters?cport=14555'>http://192.168.4.1/setparameters?cport=14555</a></td></tr><tr><td>debug</td><td>0</td><td>Enable debug</td><td><a href='http://192.168.4.1/setparameters?debug=0'>http://192.168.4.1/setparameters?debug=0</a></td></tr><tr><td>hport</td><td>14550</td><td>default 14550</td><td><a href='http://192.168.4.1/setparameters?hport=14550'>http://192.168.4.1/setparameters?hport=14550</a></td></tr><tr><td>mode</td><td>0</td><td>AP mode = 0, and STA mode = 1</td><td><a href='http://192.168.4.1/setparameters?mode=1'>http://192.168.4.1/setparameters?mode=1</a></td></tr><tr><td>pwd</td><td>pixracer</td><td>AP modepassword</td><td><a href='http://192.168.4.1/setparameters?pwd=pixracer'>http://192.168.4.1/setparameters?pwd=pixracer</a></td></tr><tr><td>pwdsta</td><td>pixracer</td><td>STA mode password</td><td><a href='http://192.168.4.1/setparameters?pwdsta=pixracer'>http://192.168.4.1/setparameters?pwdsta=pixracer</a></td></tr><tr><td>reboot</td><td>0</td><td>Reboot = 1</td><td><a href='http://192.168.4.1/setparameters?reboot=1'>http://192.168.4.1/setparameters?reboot=1</a></td></tr><tr><td>ssid</td><td>PixRacer</td><td>AP mode ssid </td><td><a href='http://192.168.4.1/setparameters?ssid=PixRacer'>http://192.168.4.1/setparameters?ssid=PixRacer</a></td></tr><tr><td>ssidsta</td><td>PixRacer</td> <td>STA mode ssid </td><td><a href='http://192.168.4.1/setparameters?ssidsta=PixRacer'>http://192.168.4.1/setparameters?ssidsta=PixRacer</a></td></tr><tr><td>ipsta</td><td>0.0.0.0</td><td>STA mode WIFI static IP</td><td><a href='http://192.168.4.1/setparameters?ipsta=192.168.4.2'>http://192.168.4.1/setparameters?ipsta=192.168.4.2</a></td></tr><tr><td>gatewaysta</td><td>0.0.0.0</td><td>STA mode gateway address</td><td><a href='http://192.168.4.1/setparameters?gatewaysta=192.168.4.1'>http://192.168.4.1/setparameters?gatewaysta=192.168.4.1</a></td></tr><tr><td>subnetsta</td><td>0.0.0.0</td><td>STA mode subnet mask</td><td><a href='http://192.168.4.1/setparameters?subnetsta=255.255.255.0'>http://192.168.4.1/setparameters?subnetsta=255.255.255.0</a></td></tr> <tr><td>webaccount</td><td>PixRacer</td><td>Web authentication account</td><td><a href='http://192.168.4.1/setparameters?webaccount=PixRacer'>http://192.168.4.1/setparameters?webaccount=PixRacer</a></td></tr><tr><td>webpassword</td><td>pixracer</td><td>Web authentication password </td><td><a href='http://192.168.4.1/setparameters?webpassword=pixracer'>http://192.168.4.1/setparameters?webpassword=pixracer</a></td></tr></tbody></table>";
+
+
 
 
 const char* kBAUD       = "baud";
@@ -89,25 +84,9 @@ ESP8266WebServer    webServer(80);
 MavESP8266Update*   updateCB    = NULL;
 bool                started     = false;
 
-   const char * headerkeys[] = {"User-Agent","Cookie"} ;
-  size_t headerkeyssize = sizeof(headerkeys)/sizeof(char*);
-  
-//---------------------------------------------------------------------------------
-String get_SessionKey(){
-	String key=FPSTR(getWorld()->getParameters()->getWebAccount());
-	key+=FPSTR(getWorld()->getParameters()->getWebPassword());
-	return  sha1(key) ;
-}
-//---------------------------------------------------------------------------------
-bool is_authentified() {
-  if (webServer.hasHeader("Cookie")) {
-    String cookie = webServer.header("Cookie");
-    if (cookie.indexOf("ESPSESSIONID=" +get_SessionKey()) != -1) {
-      return true;
-    }
-  }
-  return false;
-}
+const char * headerkeys[] = {"User-Agent", "Cookie"} ;
+size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
+
 
 //---------------------------------------------------------------------------------
 void setNoCacheHeaders() {
@@ -125,6 +104,30 @@ void returnFail(String msg) {
 void respondOK() {
   webServer.send(200, FPSTR(kTEXTPLAIN), "OK");
 }
+//---------------------------------------------------------------------------------
+void response_HTML(uint32_t code, String mine, String body) {
+  setNoCacheHeaders();
+  String message = FPSTR(kTEMPLATE);
+  message.replace("{body}", body);
+  webServer.send(code, mine, message);
+}
+//---------------------------------------------------------------------------------
+String get_SessionKey() {
+  String key = FPSTR(getWorld()->getParameters()->getWebAccount());
+  key += FPSTR(getWorld()->getParameters()->getWebPassword());
+  return  sha1(key) ;
+}
+//---------------------------------------------------------------------------------
+bool is_authentified() {
+  if (webServer.hasHeader("Cookie")) {
+    String cookie = webServer.header("Cookie");
+    if (cookie.indexOf("ESPSESSIONID=" + get_SessionKey()) != -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
 
 //---------------------------------------------------------------------------------
 void handle_update() {
@@ -135,7 +138,7 @@ void handle_update() {
   }
   webServer.sendHeader("Connection", "close");
   webServer.sendHeader(FPSTR(kACCESSCTL), "*");
-  webServer.send(200, FPSTR(kTEXTHTML), FPSTR(kUPLOADFORM));
+  response_HTML(200, FPSTR(kTEXTHTML), FPSTR(kUPLOADFORM));
 }
 
 //---------------------------------------------------------------------------------
@@ -147,7 +150,7 @@ void handle_upload() {
   }
   webServer.sendHeader("Connection", "close");
   webServer.sendHeader(FPSTR(kACCESSCTL), "*");
-  webServer.send(200, FPSTR(kTEXTPLAIN), (Update.hasError()) ? "FAIL" : "OK");
+  response_HTML(200, FPSTR(kTEXTPLAIN), (Update.hasError()) ? "FAIL" : "OK");
   if (updateCB) {
     updateCB->updateCompleted();
   }
@@ -216,36 +219,33 @@ void handle_upload_status() {
 }
 
 //---------------------------------------------------------------------------------
-void handle_getParameters()
+void handle_getSystemCFG()
 {
   if (!is_authentified()) {
     String header = "HTTP/1.1 301 OK\r\nLocation: /login\r\nCache-Control: no-cache\r\n\r\n";
     webServer.sendContent(header);
     return;
   }
-  String message = FPSTR(kHEADER);
-  message += "<p>Parameters</p><table><tr><td width=\"240\">Name</td><td>Value</td></tr>";
-  for (int i = 0; i < MavESP8266Parameters::ID_COUNT; i++) {
-    message += "<tr><td>";
-    message += getWorld()->getParameters()->getAt(i)->id;
-    message += "</td>";
-    unsigned long val = 0;
-    if (getWorld()->getParameters()->getAt(i)->type == MAV_PARAM_TYPE_UINT32)
-      val = (unsigned long) * ((uint32_t*)getWorld()->getParameters()->getAt(i)->value);
-    else if (getWorld()->getParameters()->getAt(i)->type == MAV_PARAM_TYPE_UINT16)
-      val = (unsigned long) * ((uint16_t*)getWorld()->getParameters()->getAt(i)->value);
-    else
-      val = (unsigned long) * ((int8_t*)getWorld()->getParameters()->getAt(i)->value);
-    message += "<td>";
-    message += val;
-    message += "</td></tr>";
-  }
-  message += "</table>";
-  message +=  FPSTR(HELPHTML);
-  message += "</body>";
-  webServer.send(200, FPSTR(kTEXTHTML), message);
-}
+  String message = FPSTR(kSYSCFG);
+  message.replace("{baud}", FPSTR(getWorld()->getParameters()->getUartBaudRate()));
+  message.replace("{channel}", String(getWorld()->getParameters()->getWifiChannel()));
+  message.replace("{debug}", String(getWorld()->getParameters()->getDebugEnabled()));
+  message.replace("{mode}", String(getWorld()->getParameters()->getWifiMode()));
+  message.replace("{webaccount}", FPSTR(getWorld()->getParameters()->getWebAccount()));
+  message.replace("{webpassword}", FPSTR(getWorld()->getParameters()->getWebPassword()));
 
+  message.replace("{ssid}", FPSTR(getWorld()->getParameters()->getWifiSsid()));
+  message.replace("{pwd}", FPSTR(getWorld()->getParameters()->getWifiPassword()));
+  message.replace("{hport}", String(getWorld()->getParameters()->getWifiUdpHport()));
+
+  message.replace("{ssidsta}", FPSTR(getWorld()->getParameters()->getWifiStaSsid()));
+  message.replace("{pwdsta}", FPSTR(getWorld()->getParameters()->getWifiStaPassword()));
+  message.replace("{ipsta}", FPSTR(getWorld()->getParameters()->getWifiStaIP()));
+  message.replace("{cport}", String(getWorld()->getParameters()->getWifiUdpCport()));
+  message.replace("{gatewaysta}", String(getWorld()->getParameters()->getWifiStaGateway()));
+  message.replace("{subnetsta}", String(getWorld()->getParameters()->getWifiStaSubnet()));
+  response_HTML(200, FPSTR(kTEXTHTML), message);
+}
 //---------------------------------------------------------------------------------
 void handle_getStatus()
 {
@@ -261,8 +261,7 @@ void handle_getStatus()
   }
   linkStatus* gcsStatus = getWorld()->getGCS()->getStatus();
   linkStatus* vehicleStatus = getWorld()->getVehicle()->getStatus();
-  String message = FPSTR(kHEADER);
-  message += "<p>Comm Status</p><table><tr><td width=\"240\">Packets Received from GCS</td><td>";
+  String message = "<p>Comm Status</p><table><tr><td width=\"240\">Packets Received from GCS</td><td>";
   message += gcsStatus->packets_received;
   message += "</td></tr><tr><td>Packets Sent to GCS</td><td>";
   message += gcsStatus->packets_sent;
@@ -284,9 +283,8 @@ void handle_getStatus()
   message += "</td></tr><tr><td>Parameters CRC</td><td>";
   message += paramCRC;
   message += "</td></tr></table>";
-  message += "</body>";
   setNoCacheHeaders();
-  webServer.send(200, FPSTR(kTEXTHTML), message);
+  response_HTML(200, FPSTR(kTEXTHTML), message);
 }
 
 //---------------------------------------------------------------------------------
@@ -385,7 +383,10 @@ void handle_getJSysStatus()
           );
   webServer.send(200, "application/json", message);
 }
-
+//---------------------------------------------------------------------------------
+void handle_help() {
+  response_HTML(200, FPSTR(kTEXTHTML), FPSTR(kHELPHTML));
+}
 //---------------------------------------------------------------------------------
 void handle_setParameters()
 {
@@ -478,7 +479,7 @@ void handle_setParameters()
   if (ok) {
     getWorld()->getParameters()->saveAllToEeprom();
     //-- Send new parameters back
-    handle_getParameters();
+    handle_getSystemCFG();
     if (reboot) {
       delay(100);
       ESP.restart();
@@ -487,37 +488,25 @@ void handle_setParameters()
     returnFail(kBADARG);
 }
 //---------------------------------------------------------------------------------
-void handle_setWebPassword() {
-
-
-}
-//---------------------------------------------------------------------------------
-void handle_setWebAccount() {
-
-
-}
-//---------------------------------------------------------------------------------
 //-- 404
 void handle_notFound() {
-  String message = FPSTR(kHEADER);
-  message += "URI: ";
+  String message = "<label>URI: ";
   message += webServer.uri();
   message += "\nMethod: ";
   message += (webServer.method() == HTTP_GET) ? "GET" : "POST";
   message += "\nArguments: ";
   message += webServer.args();
-  message += "\n";
+  message += "\n</label>";
 
   for (uint8_t i = 0; i < webServer.args(); i++) {
     message += " " + webServer.argName(i) + ": " + webServer.arg(i) + "\n";
   }
-  message +=	FPSTR(HELPHTML);
-  message += "</body>";
-  webServer.send(404, FPSTR(kTEXTHTML), message);
+  message +=	FPSTR(kERRORPage);
+  response_HTML(404, FPSTR(kTEXTHTML), message);
 }
 //---------------------------------------------------------------------------------
-void handleLogin() {
-  String msg;
+void handle_Login() {
+  String info = "";
   if (webServer.hasHeader("Cookie")) {
     String cookie = webServer.header("Cookie");
   }
@@ -527,27 +516,24 @@ void handleLogin() {
     return;
   }
   if (webServer.hasArg("USERNAME") && webServer.hasArg("PASSWORD")) {
-    //getWorld()->getParameters()->getWebAccount() 
+    //getWorld()->getParameters()->getWebAccount()
     //getWorld()->getParameters()->getWebPassword()
-    
+
     if (webServer.arg("USERNAME") == getWorld()->getParameters()->getWebAccount() &&  webServer.arg("PASSWORD") == getWorld()->getParameters()->getWebPassword() ) {
-	  String header = "HTTP/1.1 301 OK\r\nSet-Cookie: ESPSESSIONID=";
-	  header += get_SessionKey();
-	  header +="\r\nLocation: /\r\nCache-Control: no-cache\r\n\r\n";
+      String header = "HTTP/1.1 301 OK\r\nSet-Cookie: ESPSESSIONID=";
+      header += get_SessionKey();
+      header += "\r\nLocation: /\r\nCache-Control: no-cache\r\n\r\n";
       webServer.sendContent(header);
       return;
     }
-    msg = "Wrong username/password! try again.";
-   // msg+=FPSTR(getWorld()->getParameters()->getWebAccount());
-   // msg+=",";
-   // msg+=FPSTR(getWorld()->getParameters()->getWebPassword());
+    info = "Wrong username/password! try again.";
+    info += FPSTR(getWorld()->getParameters()->getWebAccount());
+    info += ",";
+    info += FPSTR(getWorld()->getParameters()->getWebPassword());
   }
-  String content = "<html><body><form action='/login' method='POST'>";
-  content += "User:<input type='text' name='USERNAME' placeholder='user name'><br>";
-  content += "Password:<input type='password' name='PASSWORD' placeholder='password'><br>";
-  content += "<input type='submit' name='SUBMIT' value='Submit'></form>" + msg + "<br>";
-  content += "</body></html>";
-  webServer.send(200, "text/html", content);
+  String message = FPSTR(kLOGINFORM);
+  message.replace("{msg}", info);
+  response_HTML(200, "text/html", message);
 }
 
 
@@ -563,8 +549,10 @@ void
 MavESP8266Httpd::begin(MavESP8266Update* updateCB_)
 {
   updateCB = updateCB_;
-  webServer.on("/login", handleLogin);
-  webServer.on("/getparameters",  handle_getParameters);
+
+  webServer.on("/login", handle_Login);
+  webServer.on("/help", handle_help);
+  webServer.on("/getsystemcfg",  handle_getSystemCFG);
   webServer.on("/setparameters",  handle_setParameters);
   webServer.on("/getstatus",      handle_getStatus);
   webServer.on("/info.json",      handle_getJSysInfo);
@@ -572,8 +560,8 @@ MavESP8266Httpd::begin(MavESP8266Update* updateCB_)
   webServer.on("/log.json",       handle_getJLog);
   webServer.on("/update",         handle_update);
   webServer.on("/upload",         HTTP_POST, handle_upload, handle_upload_status);
-  webServer.onNotFound(           handle_notFound);
-
+  webServer.on("/",  handle_help);
+  webServer.onNotFound(handle_notFound);
   webServer.collectHeaders(headerkeys, headerkeyssize );
   webServer.begin();
 }
