@@ -92,9 +92,11 @@ public:
         ID_WEBACT1,
         ID_WEBACT2,
         ID_WEBACT3,
+		ID_WEBACT4,
         ID_WEBPWD1,
         ID_WEBPWD2,
         ID_WEBPWD3,
+		ID_WEBPWD4,
         ID_COUNT
     };
 
