@@ -40,7 +40,7 @@
 #include "mavesp8266_parameters.h"
 #include "mavesp8266_gcs.h"
 #include "mavesp8266_vehicle.h"
-#include "mavesp8266_HtmlTemplate.h"
+#include "mavesp8266_htmlTemplate.h"
 
 #include <ESP8266WebServer.h>
 #include <Hash.h>
@@ -219,28 +219,48 @@ void handle_upload_status() {
 }
 
 //---------------------------------------------------------------------------------
-void handle_getSystemCFG()
+void handle_getSystemConfig()
 {
   if (!is_authentified()) {
     String header = "HTTP/1.1 301 OK\r\nLocation: /login\r\nCache-Control: no-cache\r\n\r\n";
     webServer.sendContent(header);
     return;
   }
-  String message = FPSTR(kSYSCFG);
-  message.replace("{baud}", FPSTR(getWorld()->getParameters()->getUartBaudRate()));
-  message.replace("{channel}", String(getWorld()->getParameters()->getWifiChannel()));
+  String message = FPSTR(kSYSTEMCFG);
+  message.replace("{baud}", String(getWorld()->getParameters()->getUartBaudRate()));
   message.replace("{debug}", String(getWorld()->getParameters()->getDebugEnabled()));
   message.replace("{mode}", String(getWorld()->getParameters()->getWifiMode()));
   message.replace("{webaccount}", FPSTR(getWorld()->getParameters()->getWebAccount()));
   message.replace("{webpassword}", FPSTR(getWorld()->getParameters()->getWebPassword()));
-
+  response_HTML(200, FPSTR(kTEXTHTML), message);
+}
+//---------------------------------------------------------------------------------
+void handle_getAPConfig()
+{
+  if (!is_authentified()) {
+    String header = "HTTP/1.1 301 OK\r\nLocation: /login\r\nCache-Control: no-cache\r\n\r\n";
+    webServer.sendContent(header);
+    return;
+  }
+  String message = FPSTR(kAPMODECFG);
+  message.replace("{channel}", String(getWorld()->getParameters()->getWifiChannel()));
   message.replace("{ssid}", FPSTR(getWorld()->getParameters()->getWifiSsid()));
   message.replace("{pwd}", FPSTR(getWorld()->getParameters()->getWifiPassword()));
   message.replace("{hport}", String(getWorld()->getParameters()->getWifiUdpHport()));
-
+  response_HTML(200, FPSTR(kTEXTHTML), message);
+}
+//---------------------------------------------------------------------------------
+void handle_getSTAConfig()
+{
+  if (!is_authentified()) {
+    String header = "HTTP/1.1 301 OK\r\nLocation: /login\r\nCache-Control: no-cache\r\n\r\n";
+    webServer.sendContent(header);
+    return;
+  }
+  String message = FPSTR(kSTAMODECFG);
   message.replace("{ssidsta}", FPSTR(getWorld()->getParameters()->getWifiStaSsid()));
   message.replace("{pwdsta}", FPSTR(getWorld()->getParameters()->getWifiStaPassword()));
-  message.replace("{ipsta}", FPSTR(getWorld()->getParameters()->getWifiStaIP()));
+  message.replace("{ipsta}", String(getWorld()->getParameters()->getWifiStaIP()));
   message.replace("{cport}", String(getWorld()->getParameters()->getWifiUdpCport()));
   message.replace("{gatewaysta}", String(getWorld()->getParameters()->getWifiStaGateway()));
   message.replace("{subnetsta}", String(getWorld()->getParameters()->getWifiStaSubnet()));
@@ -401,12 +421,15 @@ void handle_setParameters()
   }
   bool ok = false;
   bool reboot = false;
+  uint8_t cfgType=0;
   if (webServer.hasArg(kBAUD)) {
     ok = true;
+	cfgType=1;
     getWorld()->getParameters()->setUartBaudRate(webServer.arg(kBAUD).toInt());
   }
   if (webServer.hasArg(kPWD)) {
     if (strlen(webServer.arg(kPWD).c_str()) >= 8) {
+	  cfgType=2;
       ok = true;
       getWorld()->getParameters()->setWifiPassword(webServer.arg(kPWD).c_str());
     } else {
@@ -415,11 +438,13 @@ void handle_setParameters()
   }
   if (webServer.hasArg(kSSID)) {
     ok = true;
+	cfgType=2;
     getWorld()->getParameters()->setWifiSsid(webServer.arg(kSSID).c_str());
   }
   if (webServer.hasArg(kPWDSTA)) {
     if (strlen(webServer.arg(kPWD).c_str()) >= 8) {
       ok = true;
+	  cfgType=3;
       getWorld()->getParameters()->setWifiStaPassword(webServer.arg(kPWDSTA).c_str());
     } else {
       ok = false;
@@ -427,49 +452,63 @@ void handle_setParameters()
   }
   if (webServer.hasArg(kSSIDSTA)) {
     ok = true;
+	cfgType=3;
     getWorld()->getParameters()->setWifiStaSsid(webServer.arg(kSSIDSTA).c_str());
   }
   if (webServer.hasArg(kIPSTA)) {
     IPAddress ip;
     ip.fromString(webServer.arg(kIPSTA).c_str());
+	cfgType=3;
+	ok = true;
     getWorld()->getParameters()->setWifiStaIP(ip);
   }
   if (webServer.hasArg(kGATESTA)) {
     IPAddress ip;
     ip.fromString(webServer.arg(kGATESTA).c_str());
+	cfgType=3;
+	ok = true;
     getWorld()->getParameters()->setWifiStaGateway(ip);
   }
   if (webServer.hasArg(kSUBSTA)) {
     IPAddress ip;
     ip.fromString(webServer.arg(kSUBSTA).c_str());
+	cfgType=3;
+	ok = true;
     getWorld()->getParameters()->setWifiStaSubnet(ip);
   }
   if (webServer.hasArg(kCPORT)) {
     ok = true;
+	cfgType=3;
     getWorld()->getParameters()->setWifiUdpCport(webServer.arg(kCPORT).toInt());
   }
   if (webServer.hasArg(kHPORT)) {
     ok = true;
+	cfgType=2;
     getWorld()->getParameters()->setWifiUdpHport(webServer.arg(kHPORT).toInt());
   }
   if (webServer.hasArg(kCHANNEL)) {
     ok = true;
+	cfgType=2;
     getWorld()->getParameters()->setWifiChannel(webServer.arg(kCHANNEL).toInt());
   }
   if (webServer.hasArg(kDEBUG)) {
     ok = true;
+	cfgType=1;
     getWorld()->getParameters()->setDebugEnabled(webServer.arg(kDEBUG).toInt());
   }
   if (webServer.hasArg(kMODE)) {
     ok = true;
+	cfgType=1;
     getWorld()->getParameters()->setWifiMode(webServer.arg(kMODE).toInt());
   }
   if (webServer.hasArg(kWEBACCOUNT)) {
     ok = true;
+	cfgType=1;
     getWorld()->getParameters()->setWebAccount(webServer.arg(kWEBACCOUNT).c_str());
   }
   if (webServer.hasArg(kWEBPASSWORD)) {
     ok = true;
+	cfgType=1;
     getWorld()->getParameters()->setWebPassword(webServer.arg(kWEBPASSWORD).c_str());
   }
   if (webServer.hasArg(kREBOOT)) {
@@ -479,7 +518,14 @@ void handle_setParameters()
   if (ok) {
     getWorld()->getParameters()->saveAllToEeprom();
     //-- Send new parameters back
-    handle_getSystemCFG();
+	if(cfgType==1)
+		handle_getSystemConfig();
+	else if(cfgType==2)
+		handle_getAPConfig();
+	else if(cfgType==3)
+		handle_getAPConfig();
+	else
+    returnFail("unknow error");
     if (reboot) {
       delay(100);
       ESP.restart();
@@ -524,6 +570,7 @@ void handle_Login() {
       header += get_SessionKey();
       header += "\r\nLocation: /\r\nCache-Control: no-cache\r\n\r\n";
       webServer.sendContent(header);
+	  handle_getSystemConfig();
       return;
     }
     info = "Wrong username/password! try again.";
@@ -552,7 +599,9 @@ MavESP8266Httpd::begin(MavESP8266Update* updateCB_)
 
   webServer.on("/login", handle_Login);
   webServer.on("/help", handle_help);
-  webServer.on("/getsystemcfg",  handle_getSystemCFG);
+  webServer.on("/getsysconfig",  handle_getSystemConfig);
+  webServer.on("/getapconfig",  handle_getAPConfig);
+  webServer.on("/getstaconfig",  handle_getSTAConfig);
   webServer.on("/setparameters",  handle_setParameters);
   webServer.on("/getstatus",      handle_getStatus);
   webServer.on("/info.json",      handle_getJSysInfo);
@@ -560,7 +609,6 @@ MavESP8266Httpd::begin(MavESP8266Update* updateCB_)
   webServer.on("/log.json",       handle_getJLog);
   webServer.on("/update",         handle_update);
   webServer.on("/upload",         HTTP_POST, handle_upload, handle_upload_status);
-  webServer.on("/",  handle_help);
   webServer.onNotFound(handle_notFound);
   webServer.collectHeaders(headerkeys, headerkeyssize );
   webServer.begin();
