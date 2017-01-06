@@ -102,11 +102,11 @@ struct stMavEspParameters mavParameters[] = {
   {"WEB_ACCOUNT1",      &_web_account[0],      MavESP8266Parameters::ID_WEBACT1,  sizeof(uint32_t),   MAV_PARAM_TYPE_UINT32,  false},
   {"WEB_ACCOUNT2",      &_web_account[4],      MavESP8266Parameters::ID_WEBACT2,  sizeof(uint32_t),   MAV_PARAM_TYPE_UINT32,  false},
   {"WEB_ACCOUNT3",      &_web_account[8],      MavESP8266Parameters::ID_WEBACT3,  sizeof(uint32_t),   MAV_PARAM_TYPE_UINT32,  false},
-  {"WEB_ACCOUNT4",     &_web_account[12],    MavESP8266Parameters::ID_PASS4,     sizeof(uint32_t),   MAV_PARAM_TYPE_UINT32,  false},
+  {"WEB_ACCOUNT4",     &_web_account[12],    MavESP8266Parameters::ID_WEBACT4,     sizeof(uint32_t),   MAV_PARAM_TYPE_UINT32,  false},
   {"WEB_PASSWORD1",     &_web_password[0],     MavESP8266Parameters::ID_WEBPWD1,     sizeof(uint32_t),   MAV_PARAM_TYPE_UINT32,  false},
   {"WEB_PASSWORD2",     &_web_password[4],     MavESP8266Parameters::ID_WEBPWD2,     sizeof(uint32_t),   MAV_PARAM_TYPE_UINT32,  false},
   {"WEB_PASSWORD3",     &_web_password[8],     MavESP8266Parameters::ID_WEBPWD3,     sizeof(uint32_t),   MAV_PARAM_TYPE_UINT32,  false},
-  {"WEB_PASSWORD4",     &_web_password[12],    MavESP8266Parameters::ID_PASS4,     sizeof(uint32_t),   MAV_PARAM_TYPE_UINT32,  false}
+  {"WEB_PASSWORD4",     &_web_password[12],    MavESP8266Parameters::ID_WEBPWD4,     sizeof(uint32_t),   MAV_PARAM_TYPE_UINT32,  false}
 };
 
 //---------------------------------------------------------------------------------
