@@ -3,3 +3,6 @@ platformio.sublime*
 platformio.pro*
 tests
 research
+.piolibdeps
+.clang_complete
+.gcc-flags.json

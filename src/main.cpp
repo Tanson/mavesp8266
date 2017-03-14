@@ -45,7 +45,7 @@
 #include <ESP8266mDNS.h>
 
 #define GPIO02  2
-
+#define ENABLE_DEBUG
 //---------------------------------------------------------------------------------
 //-- HTTP Update Status
 class MavESP8266UpdateImp : public MavESP8266Update {
@@ -142,6 +142,7 @@ void setup() {
 #else
     //-- Initialized GPIO02 (Used for "Reset To Factory")
     pinMode(GPIO02, INPUT_PULLUP);
+
     attachInterrupt(GPIO02, reset_interrupt, FALLING);
 #endif
     Logger.begin(2048);
