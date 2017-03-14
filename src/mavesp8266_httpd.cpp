@@ -40,7 +40,7 @@
 #include "mavesp8266_parameters.h"
 #include "mavesp8266_gcs.h"
 #include "mavesp8266_vehicle.h"
-#include "mavesp8266_htmlTemplate.h"
+#include "mavesp8266_HtmlTemplate.h"
 
 #include <ESP8266WebServer.h>
 #include <Hash.h>
